@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheKurye · Performans & Onboarding Paneli</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--cyan:#15BEDF;--cyan2:#00BFEF;--teal:#20C6C6;--magenta:#EC1B8C;--navy:#16365C;--ink:#1B3F6B;--bg:#ECF4F9;--card:#FFFFFF;--soft:#E7F7FD;--orange:#F7941D;--muted:#6F8198;--line:#E1EAF2;--good:#1E9E63;--shadow:0 1px 2px rgba(20,50,80,.06),0 6px 18px rgba(20,50,80,.06);--radius:16px;--font:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);padding:18px;line-height:1.4}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.topbar{background:var(--soft);border:1px solid #CFEDF7;border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:var(--cyan2)}
+.logo .mark{display:grid;grid-template-columns:repeat(3,6px);grid-auto-rows:6px;gap:2px;transform:skewX(-12deg)}
+.logo .mark i{background:var(--cyan2);border-radius:1px}
+.logo .mark i:nth-child(2),.logo .mark i:nth-child(4),.logo .mark i:nth-child(6),.logo .mark i:nth-child(8){background:transparent}
+.filters{display:flex;gap:10px;flex:1;flex-wrap:wrap;justify-content:flex-end}
+.field{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.field select,.field input{appearance:none;border:1px solid #CFE0EC;background:#fff;border-radius:9px;padding:7px 10px;font-size:12.5px;color:var(--ink);font-family:var(--font);cursor:pointer;max-width:190px}
+.drange{display:flex;align-items:center;gap:6px}
+.drange input{max-width:132px;cursor:pointer}
+.drange span{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:var(--shadow);width:fit-content}
+.tab{border:0;background:transparent;padding:9px 20px;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:9px;font-family:var(--font)}
+.tab.on{background:var(--cyan2);color:#fff}
+.page{display:none;flex-direction:column;gap:16px}.page.active{display:flex}
+.sect{display:flex;align-items:center;gap:12px;margin-top:4px}
+.sect h2{font-size:15px;font-weight:800;color:var(--navy);white-space:nowrap}
+.sect .ln{height:2px;background:linear-gradient(90deg,var(--cyan),transparent);flex:1;border-radius:2px}
+.sect .pill{font-size:11px;font-weight:700;color:#fff;background:var(--cyan2);padding:3px 11px;border-radius:20px}
+.sect.m .pill{background:var(--magenta)}.sect.m .ln{background:linear-gradient(90deg,var(--magenta),transparent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-h{font-size:13px;font-weight:700;color:var(--navy)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.kpis.k4{grid-template-columns:repeat(4,1fr)}
+.kpi{padding:16px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.kpi .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.kpi .lab{font-size:12px;color:var(--muted);font-weight:600}
+.kpi .val{font-size:25px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
+.kpi .sub{font-size:11.5px;color:var(--muted)}.kpi .sub b{color:var(--magenta)}
+.kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cyan2)}
+.kpi.m::after{background:var(--magenta)}.kpi.o::after{background:var(--orange)}.kpi.t::after{background:var(--teal)}.kpi.g::after{background:var(--good)}
+.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.gauge{padding:18px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.gauge .t{font-size:12.5px;font-weight:700;color:var(--navy)}
+.gauge svg{width:150px;height:150px}
+.flow{padding:16px 18px}
+.flow .row{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-top:14px}
+.step{flex:1;text-align:center;position:relative}
+.step .dot{width:14px;height:14px;border-radius:50%;background:var(--cyan2);margin:0 auto 10px;box-shadow:0 0 0 4px rgba(0,191,239,.18)}
+.step::before{content:"";position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--line)}
+.step:first-child::before{display:none}
+.step .lbl{font-size:11.5px;color:var(--muted);font-weight:600;min-height:30px;display:block}
+.step .v{font-size:18px;font-weight:800;color:var(--magenta);margin-top:6px}.step .v small{font-size:11px;color:var(--muted);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-box{padding:14px 16px 18px;display:flex;flex-direction:column}
+.chart-area{position:relative;height:280px;margin-top:10px}.chart-area.tall{height:340px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.foot{font-size:11px;color:var(--muted);text-align:center;padding:4px 0 8px}
+@media(max-width:1100px){.kpis,.kpis.k4{grid-template-columns:repeat(3,1fr)}.gauges{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media(max-width:560px){.kpis,.kpis.k4{grid-template-columns:repeat(2,1fr)}.gauges{grid-template-columns:1fr}.step{flex-basis:30%}}
+
+/* ---- v2 polish ---- */
+.ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.card{transition:box-shadow .18s,transform .18s,border-color .18s}
+.kpi.card:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(20,50,80,.07),0 14px 30px rgba(20,50,80,.10)}
+.kpi .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;padding:3px 7px;border-radius:20px;white-space:nowrap}
+.delta svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4}
+.delta.up{background:#E2F4EA;color:var(--good)}
+.delta.dn{background:#FCE6F2;color:var(--magenta)}
+.delta.flat{background:#EEF3F8;color:var(--muted)}
+.kpi .sub b{color:var(--navy)}
+
+/* header */
+.htitle{display:flex;flex-direction:column;gap:2px;margin-right:6px}
+.htitle .sm{font-size:11px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 rgba(30,158,99,.5);animation:lp 2.4s infinite}
+@keyframes lp{0%{box-shadow:0 0 0 0 rgba(30,158,99,.45)}70%{box-shadow:0 0 0 6px rgba(30,158,99,0)}100%{box-shadow:0 0 0 0 rgba(30,158,99,0)}}
+
+/* section icon */
+.sect .si{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#E7F7FD;color:var(--cyan2)}
+.sect.m .si{background:#FCE6F2;color:var(--magenta)}
+.sect .si svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* delivery flow upgrade */
+.flow-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.flow-total{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid #CFEDF7;border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--navy)}
+.flow-total b{color:var(--cyan2);font-size:14px}
+.split{margin-top:18px}
+.split .bar{display:flex;height:30px;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
+.split .seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;position:relative;min-width:0;transition:filter .15s}
+.split .seg:hover{filter:brightness(1.07)}
+.split .seg span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.split .leg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.split .leg span{display:flex;align-items:center;gap:6px}
+.split .leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+/* ---- v3 teknik sağlık ---- */
+.alert-bar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--radius);border:1px solid;box-shadow:var(--shadow)}
+.alert-bar.warn{background:#FDEEDB;border-color:#F7C583;color:#8A5A00}
+.alert-bar.crit{background:#FCE6F2;border-color:#F3A8CB;color:#9A1256}
+.alert-bar.ok{background:#E2F4EA;border-color:#9FDCB9;color:#146C40}
+.alert-bar .aic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.6);flex-shrink:0}
+.alert-bar .aic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.alert-bar .at{font-size:13.5px;font-weight:800}
+.alert-bar .as{font-size:12px;font-weight:600;opacity:.85;margin-top:2px}
+.status-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.status-item{padding:14px;display:flex;flex-direction:column;gap:8px}
+.status-item .sh{display:flex;align-items:center;justify-content:space-between}
+.status-item .sname{font-size:12.5px;font-weight:700;color:var(--navy)}
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.status-dot.up{background:var(--good);box-shadow:0 0 0 3px rgba(30,158,99,.18)}
+.status-dot.slow{background:var(--orange);box-shadow:0 0 0 3px rgba(247,148,29,.18)}
+.status-dot.down{background:var(--magenta);box-shadow:0 0 0 3px rgba(236,27,140,.18)}
+.status-item .sval{font-size:11.5px;color:var(--muted);font-weight:600}
+.status-item .slabel{font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase}
+.status-item .slabel.up{color:var(--good)}.status-item .slabel.slow{color:var(--orange)}.status-item .slabel.down{color:var(--magenta)}
+@media(max-width:1100px){.status-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.status-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ---- v4: canlı onboarding KPI'ları + ilçe grafiği "geliyor" kolonu ---- */
+.pipe-key{display:inline-block;padding:2px 9px;border-radius:20px;font-weight:800;font-size:11px}
+.pipe-key.pk{background:#FCE6F2;color:#EC1B8C}
+.pipe-key.pm{background:#DDF6F5;color:#0B8A8A}
+
+/* ---- v5: bağlantılı adım akışı (onboarding) + teslimat akışı düzeltmesi ---- */
+.pflow{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pstep{position:relative;display:flex;flex-direction:column}
+.rail{position:relative;height:30px;display:flex;align-items:center;justify-content:center}
+.rail::before{content:"";position:absolute;left:50%;top:50%;width:calc(100% + 16px);height:4px;margin-top:-2px;border-radius:4px;background:var(--c);opacity:.85}
+.rail::after{content:"";position:absolute;left:calc(100% + 8px);top:50%;width:9px;height:9px;margin:-5px 0 0 -6px;border-top:3px solid var(--c);border-right:3px solid var(--c);transform:rotate(45deg);z-index:1}
+.pstep:last-child .rail::before,.pstep:last-child .rail::after{display:none}
+.pdot{position:relative;z-index:2;width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--c)}
+.pcard{position:relative;margin-top:12px;padding:18px 16px 16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;border-top:3px solid var(--c);transition:transform .18s,box-shadow .18s}
+.pcard::before{content:"";position:absolute;left:50%;top:-15px;width:3px;height:12px;margin-left:-1.5px;background:var(--c);border-radius:2px}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px var(--c)}
+.pic{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--c),var(--cd));display:grid;place-items:center;box-shadow:0 8px 16px -6px var(--c)}
+.pic svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.plab{font-size:13px;font-weight:700;color:var(--navy);margin-top:8px}
+.pval{font-size:36px;font-weight:800;color:var(--cd);letter-spacing:-1px;line-height:1.05;font-variant-numeric:tabular-nums}
+.psub{font-size:12px;color:var(--muted)}
+.pshare{width:100%;display:flex;align-items:center;gap:8px;margin-top:12px}
+.pshare .tr{flex:1;height:6px;border-radius:6px;background:#EDF3F8;overflow:hidden}
+.pshare .tr i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--c),var(--cd));transition:width .5s}
+.pshare b{font-size:11.5px;font-weight:800;color:var(--cd);min-width:34px;text-align:right}
+.pipe-key{display:inline-block;padding:2px 9px;border-radius:20px;font-weight:800;font-size:11px}
+@media(max-width:900px){
+  .pflow{grid-template-columns:1fr;gap:14px}
+  .pstep{display:grid;grid-template-columns:22px 1fr;column-gap:12px}
+  .rail{height:auto;align-items:flex-start;padding-top:28px}
+  .rail::before{left:50%;top:38px;width:4px;height:calc(100% + 14px);margin:0 0 0 -2px;background:var(--c)}
+  .rail::after,.pcard::before{display:none}
+  .pcard{margin-top:0}
+}
+/* teslimat akışı: çizgi artık noktanın altında kalıyor, her nokta kendi segment rengini taşıyor */
+.step .dot{position:relative;z-index:1;background:var(--dc,#00BFEF);box-shadow:0 0 0 4px #fff,0 0 0 6px var(--dc,#00BFEF)}
+.step::before{z-index:0}
+
+/* ---- v6: kurye akışı 2+2 ayrımı, segment seçici ---- */
+.pflow.split{position:relative;grid-template-columns:1fr 1fr;gap:46px}
+.pflow.split::before{content:"";position:absolute;left:50%;top:4px;bottom:4px;margin-left:-1px;border-left:2px dashed #C5D6E4}
+.pgroup{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.segs{flex:1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:8px}
+.seg-chip{border:1px solid #F3A8CB;background:#fff;color:var(--magenta);font:700 12px var(--font);padding:5px 14px;border-radius:20px;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s}
+.seg-chip:hover{background:#FCE6F2}
+.seg-chip.on{background:var(--magenta);color:#fff;border-color:var(--magenta);box-shadow:0 6px 14px -6px var(--magenta)}
+.seg-chip:focus-visible{outline:3px solid rgba(236,27,140,.35);outline-offset:2px}
+@media(max-width:900px){
+  .pflow.split{grid-template-columns:1fr;gap:22px}.pflow.split::before{display:none}
+  .pgroup{grid-template-columns:1fr;gap:14px}
+  .sect.m{flex-wrap:wrap}.segs{order:3;flex-basis:100%;margin-left:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo"><span class="mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>TheKurye</div>
+    <div class="htitle">
+      <div style="font-size:15px;font-weight:800;color:var(--navy);line-height:1.1">Yönetim Paneli</div>
+      <div class="sm"><span class="live-dot"></span>Canlı · <span id="lastUpd">güncel</span></div>
+    </div>
+    <div class="filters">
+      <div class="field"><label>Tarih Aralığı <span style="font-weight:600;color:#9AA8B8">(en fazla 3 gün)</span></label>
+        <div class="drange"><input type="date" id="fStart"><span>–</span><input type="date" id="fEnd"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" onclick="showPage(1,this)">Genel Performans</button>
+    <button class="tab" onclick="showPage(2,this)">Onboarding Süreçleri</button>
+    <button class="tab" onclick="showPage(3,this)">Teknik Sağlık</button>
+  </div>
+
+  <!-- PAGE 1 -->
+  <div id="page1" class="page active">
+    <div class="kpis">
+      <div class="card kpi"><div class="top"><div class="ic" style="background:#E7F7FD;color:var(--cyan2)"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg></div><span class="delta up" title="Geçen aya göre"><svg viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>%6,1</span></div><div class="lab">Teklif Sayısı</div><div class="val" id="k_teklif">—</div><div class="sub">Öneri fiyat: <b>78 B</b></div></div>
+      <div class="card kpi"><div class="top"><div class="ic" style="background:#E7F7FD;color:var(--cyan2)"><svg viewBox="0 0 24 24"><path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg></div><span class="delta up" title="Geçen aya göre"><svg viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>%4,2</span></div><div class="lab">Toplam Sipariş</div><div class="val" id="k_sip">—</div><div class="sub">Tüm işlem tipleri</div></div>
+      <div class="card kpi t"><div class="top"><div class="ic" style="background:#E3F7F7;color:var(--teal)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><span class="delta up" title="Geçen aya göre"><svg viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>%5,0</span></div><div class="lab">Teslim Edilen</div><div class="val" id="k_tes">—</div><div class="sub">Teslim oranı <b>%90,3</b></div></div>
+      <div class="card kpi o"><div class="top"><div class="ic" style="background:#FDEEDB;color:var(--orange)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></div><span class="delta dn" title="Geçen aya göre · arttı"><svg viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg>%1,3</span></div><div class="lab">İptal Edilen</div><div class="val" id="k_ipt">—</div><div class="sub">İptal oranı <b id="k_iptr">—</b></div></div>
+      <div class="card kpi m"><div class="top"><div class="ic" style="background:#FCE6F2;color:var(--magenta)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg></div><span class="delta up" title="Geçen aya göre · azaldı"><svg viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg>%2,0</span></div><div class="lab">Taşıma Kabul Edilmedi</div><div class="val" id="k_tasima">—</div><div class="sub">Kurye kabul etmedi</div></div>
+    </div>
+    <div class="gauges">
+      <div class="card gauge"><div class="t">Ort. Lead Time</div><div id="g1"></div></div>
+      <div class="card gauge"><div class="t">Kabul Edilme Oranı</div><div id="g2"></div></div>
+      <div class="card gauge"><div class="t">Teklif Revize Oranı</div><div id="g3"></div></div>
+    </div>
+    <div class="card flow">
+      <div class="flow-head">
+        <div class="card-h">Teslimat Süre Akışı (ortalama, dakika)</div>
+        <div class="flow-total"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--cyan2)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Toplam <b>41 dk</b></div>
+      </div>
+      <div class="row">
+        <div class="step"><div class="dot" style="--dc:#00BFEF"></div><span class="lbl">Teklif Kabul Edilme</span><div class="v">4<small> dk</small></div></div>
+        <div class="step"><div class="dot" style="--dc:#20C6C6"></div><span class="lbl">İşletmeye Ulaşma</span><div class="v">11<small> dk</small></div></div>
+        <div class="step"><div class="dot" style="--dc:#15BEDF"></div><span class="lbl">Paketi Teslim Alma</span><div class="v">10<small> dk</small></div></div>
+        <div class="step"><div class="dot" style="--dc:#5AB0D6"></div><span class="lbl">Yolda Geçen Süre</span><div class="v">10<small> dk</small></div></div>
+        <div class="step"><div class="dot" style="--dc:#16365C"></div><span class="lbl">Adreste Geçen Süre</span><div class="v">6<small> dk</small></div></div>
+      </div>
+      <div class="split">
+        <div class="bar">
+          <div class="seg" style="flex:4;background:#00BFEF" title="Teklif Kabul Edilme · 4 dk"><span>4dk</span></div>
+          <div class="seg" style="flex:11;background:#20C6C6" title="İşletmeye Ulaşma · 11 dk"><span>11dk</span></div>
+          <div class="seg" style="flex:10;background:#15BEDF" title="Paketi Teslim Alma · 10 dk"><span>10dk</span></div>
+          <div class="seg" style="flex:10;background:#5AB0D6" title="Yolda Geçen Süre · 10 dk"><span>10dk</span></div>
+          <div class="seg" style="flex:6;background:#16365C" title="Adreste Geçen Süre · 6 dk"><span>6dk</span></div>
+        </div>
+        <div class="leg">
+          <span><i style="background:#00BFEF"></i>Teklif kabul</span>
+          <span><i style="background:#20C6C6"></i>İşletmeye ulaşma</span>
+          <span><i style="background:#15BEDF"></i>Paketi alma</span>
+          <span><i style="background:#5AB0D6"></i>Yolda</span>
+          <span><i style="background:#16365C"></i>Adreste</span>
+        </div>
+      </div>
+    </div>
+    <div class="two">
+      <div class="card chart-box"><div class="card-h">Müşteri Sayısı (Aylık)</div><div class="chart-area"><canvas id="custChart"></canvas></div></div>
+      <div class="card chart-box"><div class="card-h">Kurye Sayısı (Aylık)</div><div class="chart-area"><canvas id="courChart"></canvas></div></div>
+    </div>
+    <div class="foot">Genel performans · Sayım KPI'ları ve aylık grafikler seçilen İlçe/İşletme Tipi'ne göre ölçeklenir · oranlar (lead time, kabul oranı vb.) popülasyondan bağımsızdır.</div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div id="page2" class="page">
+    <div class="sect"><span class="si"><svg viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="m6 17 3-10h3l3 8h3M9 7h5"/></svg></span><h2>Kurye Onboarding</h2><div class="ln"></div><span class="pill" id="k_total">—</span></div>
+    <div class="pflow split">
+      <div class="pgroup">
+      <div class="pstep" style="--c:#15BEDF;--cd:#0A9CC0;--cn:#EC1B8C"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M9 13h6M9 17h4"/></svg></div><div class="plab">Başvuru Durumunda</div><div class="pval" id="k_basvuru">—</div><div class="psub">İşleme alınmayı bekliyor</div>
+          <div class="pshare" title="Toplam kurye içindeki payı"><div class="tr"><i id="k_basvuru_pb"></i></div><b id="k_basvuru_p">—</b></div></div></div>
+
+      <div class="pstep" style="--c:#EC1B8C;--cd:#D50F7C;--cn:#1E9E63"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M6 2h12M6 22h12"/><path d="M6 2c0 5 6 6 6 10s-6 5-6 10M18 2c0 5-6 6-6 10s6 5 6 10"/></svg></div><div class="plab">Onboarding'de</div><div class="pval" id="k_onb">—</div><div class="psub">Belge + Sözleşme + Onay</div>
+          <div class="pshare" title="Toplam kurye içindeki payı"><div class="tr"><i id="k_onb_pb"></i></div><b id="k_onb_p">—</b></div></div></div>
+
+      </div>
+      <div class="pgroup">
+      <div class="pstep" style="--c:#1E9E63;--cd:#158A55;--cn:#F7941D"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg></div><div class="plab">Aktif Kurye</div><div class="pval" id="k_aktif">—</div><div class="psub">Sahada çalışan</div>
+          <div class="pshare" title="Toplam kurye içindeki payı"><div class="tr"><i id="k_aktif_pb"></i></div><b id="k_aktif_p">—</b></div></div></div>
+
+      <div class="pstep" style="--c:#F7941D;--cd:#D9700A"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div class="plab">Sipariş Atan Aktif İşletme</div><div class="pval" id="k_siparis">—</div><div class="psub">Bu dönem sipariş oluşturan</div>
+          <div class="pshare" title="Aktif işletmeler içindeki payı"><div class="tr"><i id="k_siparis_pb"></i></div><b id="k_siparis_p">—</b></div></div></div>
+      </div>
+    </div>
+    <div class="card chart-box"><div class="card-h">İlçe Bazlı Kurye Sayısı <span style="font-weight:500;color:var(--muted)" id="kIlceHint"></span></div><div class="chart-area tall"><canvas id="kIlce"></canvas></div>
+        <div class="legend"><span><span class="pipe-key pk">+N geliyor</span> Başvuru + onboarding aşamasındaki kuryeler (sağdaki sayı: toplam kurye)</span></div></div>
+    <div class="card chart-box"><div class="card-h">İl Bazlı Kurye Sayısı <span style="font-weight:500;color:var(--muted)">(temsili)</span></div><div class="chart-area" style="height:190px"><canvas id="kIl"></canvas></div>
+      <div class="legend"><span>İstanbul rakamı yukarıdaki toplamla aynıdır · diğer iller büyüme bölgeleri olarak temsili gösterilmiştir</span></div></div>
+    <div class="sect m"><span class="si"><svg viewBox="0 0 24 24"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/></svg></span><h2>Müşteri Onboarding</h2><div class="segs" id="segBar" role="group" aria-label="Segment"><button type="button" class="seg-chip on" data-seg="Tümü" aria-pressed="true" onclick="setSeg('Tümü')">Tümü</button><button type="button" class="seg-chip" data-seg="Restoran" aria-pressed="false" onclick="setSeg('Restoran')">Restoran</button><button type="button" class="seg-chip" data-seg="Market" aria-pressed="false" onclick="setSeg('Market')">Market</button><button type="button" class="seg-chip" data-seg="MYT" aria-pressed="false" onclick="setSeg('MYT')">MYT</button><button type="button" class="seg-chip" data-seg="Çiçekçi" aria-pressed="false" onclick="setSeg('Çiçekçi')">Çiçekçi</button><button type="button" class="seg-chip" data-seg="E-ticaret" aria-pressed="false" onclick="setSeg('E-ticaret')">E-ticaret</button></div><span class="pill" id="m_total">—</span></div>
+    <div class="pflow split">
+      <div class="pgroup">
+      <div class="pstep" style="--c:#15BEDF;--cd:#0A9CC0;--cn:#EC1B8C"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M9 13h6M9 17h4"/></svg></div><div class="plab">Başvuru Durumunda</div><div class="pval" id="m_basvuru">—</div><div class="psub">İşleme alınmayı bekliyor</div>
+          <div class="pshare" title="Toplam müşteri içindeki payı"><div class="tr"><i id="m_basvuru_pb"></i></div><b id="m_basvuru_p">—</b></div></div></div>
+
+      <div class="pstep" style="--c:#EC1B8C;--cd:#D50F7C"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M6 2h12M6 22h12"/><path d="M6 2c0 5 6 6 6 10s-6 5-6 10M18 2c0 5-6 6-6 10s6 5 6 10"/></svg></div><div class="plab">Onboarding'de</div><div class="pval" id="m_onb">—</div><div class="psub">Belge + Sözleşme + Onay</div>
+          <div class="pshare" title="Toplam müşteri içindeki payı"><div class="tr"><i id="m_onb_pb"></i></div><b id="m_onb_p">—</b></div></div></div>
+
+      </div>
+      <div class="pgroup">
+      <div class="pstep" style="--c:#1E9E63;--cd:#158A55;--cn:#20C6C6"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic"><svg viewBox="0 0 24 24"><path d="M3 9 4.5 4h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/><path d="m9.5 14 1.5 1.5 3-3"/></svg></div><div class="plab">Aktif Müşteri</div><div class="pval" id="m_aktif">—</div><div class="psub">Sipariş alabilen</div>
+          <div class="pshare" title="Toplam müşteri içindeki payı"><div class="tr"><i id="m_aktif_pb"></i></div><b id="m_aktif_p">—</b></div></div></div>
+
+      <div class="pstep" style="--c:#20C6C6;--cd:#0E9E9E"><div class="rail"><i class="pdot"></i></div>
+        <div class="card pcard"><div class="pic" id="m_rest_i"><svg viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 0 0 4 0V3M8 11v10M15 3c-1.3.7-2 2.5-2 4.5s.7 3.8 2 4.5v9"/></svg></div><div class="plab" id="m_rest_l">Aktif Restoran</div><div class="pval" id="m_rest">—</div><div class="psub" id="m_rest_s">Aktif müşterilerin en büyük tipi</div>
+          <div class="pshare" title="Aktif müşteriler içindeki payı"><div class="tr"><i id="m_rest_pb"></i></div><b id="m_rest_p">—</b></div></div></div>
+      </div>
+    </div>
+    <div class="card chart-box"><div class="card-h">İlçe Bazlı Müşteri Sayısı <span style="font-weight:500;color:var(--muted)" id="mIlceHint"></span></div><div class="chart-area tall"><canvas id="mIlce"></canvas></div>
+      <div class="legend"><span><span class="pipe-key pm">+N geliyor</span> Başvuru + onboarding aşamasındaki işletmeler (sağdaki sayı: toplam müşteri)</span></div>
+    </div>
+    <div class="two">
+      <div class="card chart-box"><div class="card-h">Segmente Göre Aktif / Pasif Durumu</div><div class="chart-area"><canvas id="mStatusSeg"></canvas></div>
+        <div class="legend"><span><i style="background:#1E9E63"></i>Aktif</span><span><i style="background:#B8C4D0"></i>Pasif</span></div>
+      </div>
+      <div class="card chart-box"><div class="card-h">Müşteri Segmenti (Marka/Kanal)</div><div class="chart-area"><canvas id="mSegment"></canvas></div></div>
+    </div>
+    <div class="foot">Onboarding süreçleri · Tüm sayılar temsilidir ve seçilen filtrelere (İlçe / Durum / İşletme Tipi) göre yeniden hesaplanır · gerçek panel verisine bağlanabilir.</div>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div id="page3" class="page">
+    <div class="alert-bar warn" id="anomalyBar">
+      <div class="aic"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+      <div>
+        <div class="at" id="anomalyTitle">Sipariş akışı kontrol ediliyor…</div>
+        <div class="as" id="anomalySub">Son saatlik veri, geçen haftanın aynı saat aralığıyla karşılaştırılıyor.</div>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="card kpi"><div class="top"><div class="ic" style="background:#E7F7FD;color:var(--cyan2)"><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><span class="delta" id="d_akis">—</span></div><div class="lab">Bu Saatki Sipariş</div><div class="val" id="k_akis">—</div><div class="sub">Beklenen: <b id="k_akis_exp">—</b></div></div>
+      <div class="card kpi o"><div class="top"><div class="ic" style="background:#FDEEDB;color:var(--orange)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><span class="delta" id="d_apierr">—</span></div><div class="lab">API Hata Oranı</div><div class="val" id="k_apierr">—</div><div class="sub">Sipariş oluşturma isteklerinde</div></div>
+      <div class="card kpi t"><div class="top"><div class="ic" style="background:#E3F7F7;color:var(--teal)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><span class="delta" id="d_latency">—</span></div><div class="lab">Ort. Sipariş Oluşturma Süresi</div><div class="val" id="k_latency">—</div><div class="sub">Uçtan uca API yanıt süresi</div></div>
+      <div class="card kpi m"><div class="top"><div class="ic" style="background:#FCE6F2;color:var(--magenta)"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/></svg></div><span class="delta" id="d_odeme">—</span></div><div class="lab">Ödeme Hata Oranı</div><div class="val" id="k_odeme">—</div><div class="sub">Başarısız tahsilat denemeleri</div></div>
+      <div class="card kpi g"><div class="top"><div class="ic" style="background:#E2F4EA;color:var(--good)"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><span class="delta" id="d_bildirim">—</span></div><div class="lab">Bildirim Başarı Oranı</div><div class="val" id="k_bildirim">—</div><div class="sub">Push + SMS iletim</div></div>
+    </div>
+    <div class="card chart-box">
+      <div class="card-h">Saatlik Sipariş Akışı — Bugün vs Geçen Hafta Ortalaması</div>
+      <div class="chart-area tall"><canvas id="orderFlowChart"></canvas></div>
+      <div class="legend"><span><i style="background:#00BFEF"></i>Bugün</span><span><i style="background:#C7D2DD"></i>Geçen hafta ort.</span></div>
+    </div>
+    <div class="sect"><span class="si"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><h2>Servis Durumu</h2><div class="ln"></div><span class="pill" id="svc_pill">—</span></div>
+    <div class="status-grid" id="svcGrid"></div>
+    <div class="foot">Teknik sağlık · KPI'lar ve grafik temsili veriyle üretilmiştir, gerçek izleme/alerting sistemine (API gateway, ödeme sağlayıcı, push servisi) bağlanabilir · "Bu Saatki Sipariş" beklenenin belirgin altına düştüğünde üstteki uyarı otomatik kırmızıya döner — sipariş düşüşü şüphesinde ilk bakılacak sekme burasıdır.</div>
+  </div>
+</div>
+
+<script>
+// ---------- ring gauge ----------
+function ring(id,disp,sub,frac){
+  const r=54,C=2*Math.PI*r,arc=Math.max(0,Math.min(1,frac))*C;
+  document.getElementById(id).innerHTML=`<svg viewBox="0 0 150 150">
+   <defs><linearGradient id="grad_${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#15BEDF"/><stop offset="1" stop-color="#20C6C6"/></linearGradient></defs>
+   <circle cx="75" cy="75" r="${r}" fill="none" stroke="#EDF3F8" stroke-width="11"/>
+   <circle cx="75" cy="75" r="${r}" fill="none" stroke="url(#grad_${id})" stroke-width="11" stroke-linecap="round" stroke-dasharray="${arc} ${C-arc}" transform="rotate(-90 75 75)"/>
+   <text x="75" y="79" text-anchor="middle" font-size="33" font-weight="800" fill="#16365C">${disp}</text>
+   <text x="75" y="99" text-anchor="middle" font-size="11" font-weight="600" fill="#8093A6">${sub}</text></svg>`;
+}
+ring('g1','37','dakika',37/60);ring('g2','%99','kabul',.99);ring('g3','%9','revize',9/15);
+
+// ---------- data model ----------
+const ILCELER=['Adalar','Arnavutköy','Ataşehir','Avcılar','Bağcılar','Bahçelievler','Bakırköy','Başakşehir','Bayrampaşa','Beşiktaş','Beykoz','Beylikdüzü','Beyoğlu','Büyükçekmece','Çatalca','Çekmeköy','Esenler','Esenyurt','Eyüpsultan','Fatih','Gaziosmanpaşa','Güngören','Kadıköy','Kağıthane','Kartal','Küçükçekmece','Maltepe','Pendik','Sancaktepe','Sarıyer','Silivri','Sultanbeyli','Sultangazi','Şile','Şişli','Tuzla','Ümraniye','Üsküdar','Zeytinburnu'];
+const W={'Adalar':.2,'Arnavutköy':.5,'Ataşehir':2.2,'Avcılar':.9,'Bağcılar':1.4,'Bahçelievler':1.1,'Bakırköy':1.5,'Başakşehir':1.4,'Bayrampaşa':.8,'Beşiktaş':1.8,'Beykoz':.7,'Beylikdüzü':1.3,'Beyoğlu':1.6,'Büyükçekmece':.9,'Çatalca':.2,'Çekmeköy':.7,'Esenler':.9,'Esenyurt':1.6,'Eyüpsultan':1.0,'Fatih':1.7,'Gaziosmanpaşa':1.0,'Güngören':.7,'Kadıköy':2.6,'Kağıthane':1.1,'Kartal':1.4,'Küçükçekmece':1.5,'Maltepe':1.7,'Pendik':1.6,'Sancaktepe':.9,'Sarıyer':1.2,'Silivri':.3,'Sultanbeyli':.8,'Sultangazi':.9,'Şile':.15,'Şişli':1.9,'Tuzla':.8,'Ümraniye':1.6,'Üsküdar':2.0,'Zeytinburnu':.9};
+const Wsum=ILCELER.reduce((s,i)=>s+W[i],0);
+const share=i=>W[i]/Wsum;
+const DURUMLAR=['Başvuru','Belge Onayı','Sözleşme Süreci','Başvuru Onayı','Aktif','Pasif','Kara Liste','Silindi'];
+const ILLER=[['İstanbul',1],['İzmir',.15],['Kocaeli',.07],['Eskişehir',.04]];
+const TIPLER=['Restoran','E-ticaret','Market','Çiçekçi'];
+const kProp={'Başvuru':.323,'Belge Onayı':.088,'Sözleşme Süreci':.037,'Başvuru Onayı':.025,'Aktif':.051,'Pasif':.376,'Kara Liste':.016,'Silindi':.084};
+const mProp={'Başvuru':.227,'Belge Onayı':.051,'Sözleşme Süreci':.032,'Başvuru Onayı':.024,'Aktif':.570,'Pasif':.081,'Kara Liste':0,'Silindi':.015};
+const tProp={'Restoran':.53,'E-ticaret':.09,'Market':.335,'Çiçekçi':.045};
+const KTOT=13014,MTOT=1848,ORDER_RATE=.72; // aktif işletmelerin sipariş atan oranı (temsili)
+const kCell=(il,d)=>Math.round(share(il)*KTOT*kProp[d]);
+const mCell=(il,d,t)=>Math.round(share(il)*MTOT*mProp[d]*tProp[t]);
+const stCol=['#15BEDF','#36C7E6','#57D0EA','#20C6C6','#1E9E63','#9AA8B8','#16365C','#C7D2DD'];
+let SEG='Tümü';
+const SEGMAP={'Restoran':{'Restoran':1},'Market':{'Market':1},'MYT':{'Market':.66},'Çiçekçi':{'Çiçekçi':1},'E-ticaret':{'E-ticaret':1}};
+const segW=t=>SEG==='Tümü'?1:((SEGMAP[SEG]||{})[t]||0);
+const mc=(i,d,t)=>Math.round(mCell(i,d,t)*segW(t)); // segment ağırlıklı müşteri sayısı (MYT = Market'in %66'sı)
+const ICON_REST='<svg viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 0 0 4 0V3M8 11v10M15 3c-1.3.7-2 2.5-2 4.5s.7 3.8 2 4.5v9"/></svg>';
+const ICON_PIE='<svg viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>';
+function setSeg(v){SEG=(SEG===v&&v!=='Tümü')?'Tümü':v;document.querySelectorAll('#segBar .seg-chip').forEach(b=>{const on=b.dataset.seg===SEG;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});render();}
+const fmt=n=>Math.round(n).toLocaleString('tr-TR');
+
+// populate selects
+const optAll=(sel,arr)=>{sel.innerHTML='<option>Tümü</option>'+arr.map(x=>`<option>${x}</option>`).join('')};
+
+
+// ---------- charts ----------
+Chart.defaults.font.family="Segoe UI, system-ui, sans-serif";Chart.defaults.font.size=11.5;Chart.defaults.color="#6F8198";
+const months=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+const custBase={akt:[1,3,19,30,55,90,110,142,190,288,324,430],top:[1,5,20,43,69,110,130,175,240,324,360,478]};
+const courBase={akt:[3,4,5,10,20,28,43,57,90,140,168,250],top:[3,5,8,12,21,33,50,58,91,150,188,292]};
+const barOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',padding:14}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF3F8'},beginAtZero:true}}};
+// "geliyor" kolonu: her ilçe satırının sağına toplam + (başvuru+onboarding) rozeti çizer
+const pipePlugin={
+  id:'pipeCol',
+  beforeLayout(chart){const p=chart.options.layout&&chart.options.layout.padding;if(p)p.right=chart.width<560?96:190;},
+  afterDatasetsDraw(chart,args,opt){
+    const pipe=chart.$pipe;if(!pipe||!opt)return;
+    const {ctx,chartArea}=chart,meta=chart.getDatasetMeta(0),compact=chart.width<560,ff=Chart.defaults.font.family;
+    ctx.save();ctx.textBaseline='middle';
+    meta.data.forEach((bar,i)=>{
+      const p=pipe[i];if(!p)return;const y=bar.y,n=p.b+p.o;let x=chartArea.right+12;
+      if(!compact){ctx.font='700 12.5px '+ff;ctx.fillStyle='#16365C';ctx.textAlign='left';ctx.fillText(fmt(chart.data.datasets[0].data[i]),x,y);x+=54;}
+      const txt=n>0?'+'+fmt(n)+(compact?'':' geliyor'):'—';
+      ctx.font='800 11.5px '+ff;const w=ctx.measureText(txt).width+18,h=20;
+      if(n>0){ctx.fillStyle=opt.bg;ctx.beginPath();const r=h/2,X=x,Y=y-h/2;
+        ctx.moveTo(X+r,Y);ctx.arcTo(X+w,Y,X+w,Y+h,r);ctx.arcTo(X+w,Y+h,X,Y+h,r);ctx.arcTo(X,Y+h,X,Y,r);ctx.arcTo(X,Y,X+w,Y,r);ctx.closePath();ctx.fill();}
+      ctx.fillStyle=n>0?opt.fg:'#9AA8B8';ctx.textAlign=n>0?'center':'left';ctx.fillText(txt,n>0?x+w/2:x+6,y+.5);
+    });
+    ctx.restore();
+  }
+};
+const ilceOpts=(bg,fg,label)=>({...hOpts,layout:{padding:{right:190}},plugins:{legend:{display:false},pipeCol:{bg,fg},
+  tooltip:{callbacks:{afterBody:items=>{const ch=items[0].chart,p=ch.$pipe&&ch.$pipe[items[0].dataIndex];
+    return p?['','Yolda: +'+fmt(p.b+p.o)+' '+label,'  Başvuru: '+fmt(p.b),'  Onboarding: '+fmt(p.o)]:[];}}}}});
+const hOpts={indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EEF3F8'},beginAtZero:true},y:{grid:{display:false}}}};
+
+const custChart=new Chart(custChartEl(),{type:'bar',data:{labels:months,datasets:[
+  {label:'Aktif Müşteri',data:custBase.akt,backgroundColor:'#EC1B8C',borderRadius:4,barPercentage:.78,categoryPercentage:.62},
+  {label:'Toplam Müşteri',data:custBase.top,backgroundColor:'#15BEDF',borderRadius:4,barPercentage:.78,categoryPercentage:.62}]},options:barOpts});
+const courChart=new Chart(document.getElementById('courChart'),{type:'bar',data:{labels:months,datasets:[
+  {label:'Aktif Kurye',data:courBase.akt,backgroundColor:'#15BEDF',borderRadius:4,barPercentage:.78,categoryPercentage:.62},
+  {label:'Toplam Kurye',data:courBase.top,backgroundColor:'#EC1B8C',borderRadius:4,barPercentage:.78,categoryPercentage:.62}]},options:barOpts});
+function custChartEl(){return document.getElementById('custChart')}
+
+let p2done=false,c={};
+function initPage2(){
+  c.kIlce=new Chart(document.getElementById('kIlce'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#15BEDF',borderRadius:5}]},options:ilceOpts('#FCE6F2','#EC1B8C','kurye'),plugins:[pipePlugin]});
+  c.kIl=new Chart(document.getElementById('kIl'),{type:'bar',data:{labels:ILLER.map(e=>e[0]),datasets:[{data:[0,0,0,0],backgroundColor:['#15BEDF','#6CC3DE','#9AD4E6','#C7E7EF'],borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:64}},plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EEF3F8'},beginAtZero:true},y:{grid:{display:false}}}},plugins:[{id:'provNum',afterDatasetsDraw(chart){const{ctx,chartArea}=chart,meta=chart.getDatasetMeta(0),ff=Chart.defaults.font.family;ctx.save();ctx.textBaseline='middle';ctx.textAlign='left';ctx.font='700 12.5px '+ff;ctx.fillStyle='#16365C';meta.data.forEach((bar,i)=>{ctx.fillText(fmt(chart.data.datasets[0].data[i]),chartArea.right+10,bar.y)});ctx.restore();}}]});
+  c.mIlce=new Chart(document.getElementById('mIlce'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#EC1B8C',borderRadius:5}]},options:ilceOpts('#DDF6F5','#0B8A8A','işletme'),plugins:[pipePlugin]});
+  c.mStatusSeg=new Chart(document.getElementById('mStatusSeg'),{type:'bar',data:{labels:TIPLER,datasets:[
+    {label:'Aktif',data:[0,0,0,0],backgroundColor:'#1E9E63',borderRadius:5,barPercentage:.7,categoryPercentage:.6},
+    {label:'Pasif',data:[0,0,0,0],backgroundColor:'#B8C4D0',borderRadius:5,barPercentage:.7,categoryPercentage:.6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF3F8'},beginAtZero:true}}}});
+  c.mSegment=new Chart(document.getElementById('mSegment'),{type:'bar',data:{labels:['Restoran','MYT','Migros','E-ticaret','Çiçekçi'],datasets:[{data:[0,0,0,0,0],backgroundColor:['#20C6C6','#EC1B8C','#F7941D','#15BEDF','#1E9E63'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF3F8'},beginAtZero:true}}}});
+  p2done=true;
+}
+
+// ---------- render ----------
+function topN(obj,n){return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n)}
+function render(){
+  const ilSel='Tümü', duSel='Tümü', tpSel='Tümü';
+  const ilces=ilSel==='Tümü'?ILCELER:[ilSel];
+  const durs=duSel==='Tümü'?DURUMLAR:[duSel];
+  const tips=tpSel==='Tümü'?TIPLER:[tpSel];
+
+  // ----- PAGE 1 scaling (İlçe + İşletme Tipi) -----
+  const ilRatio=ilces.reduce((s,i)=>s+share(i),0);
+  const tipRatio=tps=>tps.reduce((s,t)=>s+tProp[t],0);
+  const pop=ilRatio*(tpSel==='Tümü'?1:tProp[tpSel]);
+  const TEK=148302,SIP=148302,TES=133919,IPT=13013,TASIMA=1483;
+  document.getElementById('k_teklif').textContent=fmt(TEK*pop);
+  document.getElementById('k_sip').textContent=fmt(SIP*pop);
+  document.getElementById('k_tes').textContent=fmt(TES*pop);
+  document.getElementById('k_ipt').textContent=fmt(IPT*pop);
+  document.getElementById('k_iptr').textContent='%'+((IPT/SIP)*100).toFixed(1).replace('.',',');
+  document.getElementById('k_tasima').textContent=fmt(TASIMA*pop);
+  custChart.data.datasets[0].data=custBase.akt.map(v=>Math.round(v*pop));
+  custChart.data.datasets[1].data=custBase.top.map(v=>Math.round(v*pop));
+  courChart.data.datasets[0].data=courBase.akt.map(v=>Math.round(v*ilRatio));
+  courChart.data.datasets[1].data=courBase.top.map(v=>Math.round(v*ilRatio));
+  custChart.update();courChart.update();
+
+  // ----- PAGE 2 -----
+  // kurye KPIs (status-specific, over selected ilçe)
+  const kBy=d=>ilces.reduce((s,i)=>s+kCell(i,d),0);
+  const kAktif=kBy('Aktif'),kBas=kBy('Başvuru'),kOnb=kBy('Belge Onayı')+kBy('Sözleşme Süreci')+kBy('Başvuru Onayı'),kPas=kBy('Pasif')+kBy('Kara Liste');
+  const kTotal=ilces.reduce((s,i)=>DURUMLAR.reduce((a,d)=>a+kCell(i,d),s),0);
+  // müşteri KPIs (over selected ilçe + tip)
+  const mBy=d=>ilces.reduce((s,i)=>tips.reduce((a,t)=>a+mc(i,d,t),s),0);
+  const mAktif=mBy('Aktif'),mBas=mBy('Başvuru'),mOnb=mBy('Belge Onayı')+mBy('Sözleşme Süreci')+mBy('Başvuru Onayı');
+  const mRest=tips.includes('Restoran')?ilces.reduce((s,i)=>s+mc(i,'Aktif','Restoran'),0):0;
+  const mAktifAll=ilces.reduce((s,i)=>tips.reduce((a,t)=>a+mCell(i,'Aktif',t),s),0);
+  const mTotal=ilces.reduce((s,i)=>DURUMLAR.reduce((a,d)=>tips.reduce((b,t)=>b+mc(i,d,t),a),s),0);
+
+  const mSip=Math.round(mAktif*ORDER_RATE); // TODO: gerçek veride 'sipariş atan aktif işletme' sayısına bağlanır
+  setTxt('k_aktif',kAktif);setTxt('k_basvuru',kBas);setTxt('k_onb',kOnb);setTxt('k_siparis',mSip);
+  setTxt('m_aktif',mAktif);setTxt('m_basvuru',mBas);setTxt('m_onb',mOnb);
+  const segOn=SEG!=='Tümü';
+  document.getElementById('m_rest_i').innerHTML=segOn?ICON_PIE:ICON_REST;
+  setTxtRaw('m_rest_l',segOn?'Aktif Payı':'Aktif Restoran');
+  setTxtRaw('m_rest_s',segOn?'Tüm aktif müşteriler içinde · '+SEG:'Aktif müşterilerin en büyük tipi');
+  if(segOn){const r=mAktifAll?Math.round(mAktif/mAktifAll*100):0;setTxtRaw('m_rest','%'+r);}else setTxt('m_rest',mRest);
+  const pct=(id,v,t)=>{const r=t?Math.round(v/t*100):0;setTxtRaw(id,'%'+r);const b=document.getElementById(id+'b');if(b)b.style.width=Math.min(100,r)+'%';};
+  pct('k_aktif_p',kAktif,kTotal);pct('k_basvuru_p',kBas,kTotal);pct('k_onb_p',kOnb,kTotal);pct('k_siparis_p',mSip,mAktif);
+  pct('m_aktif_p',mAktif,mTotal);pct('m_basvuru_p',mBas,mTotal);pct('m_onb_p',mOnb,mTotal);if(segOn)pct('m_rest_p',mAktif,mAktifAll);else pct('m_rest_p',mRest,mAktif);
+  setTxtRaw('k_total','Toplam '+fmt(kTotal)+' kurye');
+  setTxtRaw('m_total','Toplam '+fmt(mTotal)+' müşteri');
+
+  if(p2done){
+    // status distributions (over selected ilçe/tip) — emphasize selected durum
+    // ilçe charts: counts for selected durum(s), top 12 districts
+    const kIl={};ILCELER.forEach(i=>{kIl[i]=durs.reduce((s,d)=>s+kCell(i,d),0)});
+    const mIl={};ILCELER.forEach(i=>{mIl[i]=durs.reduce((s,d)=>tips.reduce((a,t)=>a+mc(i,d,t),s),0)});
+    const kTop=(ilSel==='Tümü'?topN(kIl,12):[[ilSel,kIl[ilSel]]]);
+    const mTop=(ilSel==='Tümü'?topN(mIl,12):[[ilSel,mIl[ilSel]]]);
+    const ONB=['Belge Onayı','Sözleşme Süreci','Başvuru Onayı'];
+    const kPipe=i=>({b:kCell(i,'Başvuru'),o:ONB.reduce((s,d)=>s+kCell(i,d),0)});
+    const mPipe=i=>({b:tips.reduce((s,t)=>s+mc(i,'Başvuru',t),0),o:ONB.reduce((s,d)=>tips.reduce((a,t)=>a+mc(i,d,t),s),0)});
+    c.kIlce.$pipe=kTop.map(e=>kPipe(e[0]));c.mIlce.$pipe=mTop.map(e=>mPipe(e[0]));
+    c.kIlce.data.labels=kTop.map(e=>e[0]);c.kIlce.data.datasets[0].data=kTop.map(e=>e[1]);
+    c.kIl.data.datasets[0].data=ILLER.map(([,r])=>Math.round(kTotal*r));
+    c.mIlce.data.labels=mTop.map(e=>e[0]);c.mIlce.data.datasets[0].data=mTop.map(e=>e[1]);
+    document.getElementById('kIlceHint').textContent=duSel==='Tümü'?'(tüm durumlar, ilk 12)':'· '+duSel;
+    document.getElementById('mIlceHint').textContent=(duSel==='Tümü'?'(tüm durumlar, ilk 12)':'· '+duSel)+(SEG!=='Tümü'?' · '+SEG:'');
+    // müşteri tipi (over selected ilçe/durum)
+    const mT=t=>ilces.reduce((s,i)=>durs.reduce((a,d)=>a+mCell(i,d,t),s),0);
+    // segmente göre aktif/pasif dağılımı
+    const mAktifT=t=>ilces.reduce((s,i)=>s+mCell(i,'Aktif',t),0);
+    const mPasifT=t=>ilces.reduce((s,i)=>s+mCell(i,'Pasif',t)+mCell(i,'Kara Liste',t),0);
+    c.mStatusSeg.data.datasets[0].data=TIPLER.map(mAktifT);
+    c.mStatusSeg.data.datasets[1].data=TIPLER.map(mPasifT);
+    // segment: Market -> MYT .66 / Migros .34
+    const mk=mT('Market');
+    c.mSegment.data.datasets[0].data=[mT('Restoran'),Math.round(mk*.66),Math.round(mk*.34),mT('E-ticaret'),mT('Çiçekçi')];
+    const dim='#E3EAF1',segL=['Restoran','MYT','Migros','E-ticaret','Çiçekçi'],segC=['#20C6C6','#EC1B8C','#F7941D','#15BEDF','#1E9E63'];
+    c.mSegment.data.datasets[0].backgroundColor=segL.map((l,k)=>SEG==='Tümü'||l===SEG||(SEG==='Market'&&(l==='MYT'||l==='Migros'))?segC[k]:dim);
+    Object.values(c).forEach(ch=>ch.update());
+  }
+}
+function setTxt(id,v){document.getElementById(id).textContent=fmt(v)}
+function setTxtRaw(id,v){document.getElementById(id).textContent=v}
+
+function showPage(n,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page'+n).classList.add('active');btn.classList.add('on');
+  if(n===2){ if(!p2done){initPage2();} render(); Object.values(c).forEach(ch=>ch.resize()); }
+  if(n===3){ if(!p3done){initPage3();} else if(window.orderFlowChart){window.orderFlowChart.resize();} }
+}
+// ---------- PAGE 3: teknik sağlık ----------
+let p3done=false;
+function initPage3(){
+  const hours=Array.from({length:24},(_,i)=>i+':00');
+  // tipik günlük sipariş dağılım şekli (göreceli), öğle/akşam pikleri ile
+  const shape=[2,1,1,1,1,2,5,10,16,22,28,34,40,37,30,26,32,40,46,42,32,20,11,5];
+  const now=new Date();
+  const curHour=now.getHours();
+  const lastWeek=shape.map(v=>Math.round(v*(.9+Math.random()*.2)));
+  // demo amaçlı: son 2 tamamlanan saatte belirgin bir düşüş simüle ediliyor (gerçek veride bu API'den gelir)
+  const today=shape.map((v,i)=>{
+    if(i>curHour) return null;
+    let val=Math.round(v*(.9+Math.random()*.2));
+    if(i>=curHour-1 && i<=curHour) val=Math.round(val*0.42);
+    return val;
+  });
+
+  window.orderFlowChart=new Chart(document.getElementById('orderFlowChart'),{type:'line',data:{labels:hours,datasets:[
+    {label:'Bugün',data:today,borderColor:'#00BFEF',backgroundColor:'rgba(0,191,239,.12)',fill:true,tension:.35,spanGaps:false,pointRadius:3,pointBackgroundColor:'#00BFEF'},
+    {label:'Geçen hafta ort.',data:lastWeek,borderColor:'#C7D2DD',borderDash:[5,4],backgroundColor:'transparent',fill:false,tension:.35,pointRadius:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#EEF3F8'},beginAtZero:true}}}});
+
+  // ---- KPI hesapları ----
+  const curVal=today[curHour]||0;
+  const expVal=lastWeek[curHour]||1;
+  const diffPct=((curVal-expVal)/expVal*100);
+  document.getElementById('k_akis').textContent=fmt(curVal);
+  document.getElementById('k_akis_exp').textContent=fmt(expVal);
+  const dAkis=document.getElementById('d_akis');
+  dAkis.textContent=(diffPct>=0?'+%':'−%')+Math.abs(diffPct).toFixed(0);
+  dAkis.className='delta '+(diffPct<=-25?'dn':diffPct<0?'flat':'up');
+
+  const apiErr=diffPct<=-25?(3.5+Math.random()*2):(0.2+Math.random()*0.4);
+  document.getElementById('k_apierr').textContent='%'+apiErr.toFixed(1).replace('.',',');
+  const dApi=document.getElementById('d_apierr');dApi.textContent=apiErr>2?'Eşik aşıldı':'Normal';dApi.className='delta '+(apiErr>2?'dn':'up');
+
+  const latency=diffPct<=-25?(2.4+Math.random()*1.2):(0.6+Math.random()*0.3);
+  document.getElementById('k_latency').textContent=latency.toFixed(1).replace('.',',')+' sn';
+  const dLat=document.getElementById('d_latency');dLat.textContent=latency>1.5?'Yavaşladı':'Normal';dLat.className='delta '+(latency>1.5?'dn':'up');
+
+  const odemeErr=1.1+Math.random()*0.8;
+  document.getElementById('k_odeme').textContent='%'+odemeErr.toFixed(1).replace('.',',');
+  const dOdeme=document.getElementById('d_odeme');dOdeme.textContent='Normal';dOdeme.className='delta up';
+
+  const bildirim=97+Math.random()*2;
+  document.getElementById('k_bildirim').textContent='%'+bildirim.toFixed(1).replace('.',',');
+  const dBild=document.getElementById('d_bildirim');dBild.textContent='Normal';dBild.className='delta up';
+
+  // ---- anomali bandı ----
+  const bar=document.getElementById('anomalyBar');
+  const title=document.getElementById('anomalyTitle');
+  const sub=document.getElementById('anomalySub');
+  if(diffPct<=-25){
+    bar.className='alert-bar crit';
+    title.textContent='Anomali tespit edildi: sipariş akışı beklenenin %'+Math.abs(diffPct).toFixed(0)+' altında';
+    sub.textContent='Bu saat '+fmt(curVal)+' sipariş geldi, geçen haftanın aynı saatinde ortalama '+fmt(expVal)+' sipariş vardı. API hata oranı ve yanıt süresi de yükseldi — teknik ekip kontrol etmeli.';
+  }else if(diffPct<=-10){
+    bar.className='alert-bar warn';
+    title.textContent='Hafif düşüş: sipariş akışı beklenenin %'+Math.abs(diffPct).toFixed(0)+' altında';
+    sub.textContent='Kritik eşik (−%25) henüz aşılmadı, ancak takipte kalın.';
+  }else{
+    bar.className='alert-bar ok';
+    title.textContent='Sipariş akışı normal seyrediyor';
+    sub.textContent='Bu saatki veri, geçen haftanın aynı saatine yakın seyrediyor.';
+  }
+
+  // ---- servis durumu ----
+  const services=[
+    {name:'Sipariş API',status:diffPct<=-25?'down':(apiErr>2?'slow':'up'),detail:'%'+apiErr.toFixed(1).replace('.',',')+' hata'},
+    {name:'Ödeme Gateway',status:odemeErr>2.2?'slow':'up',detail:'%'+odemeErr.toFixed(1).replace('.',',')+' hata'},
+    {name:'Bildirim Servisi',status:bildirim<95?'slow':'up',detail:'%'+bildirim.toFixed(1).replace('.',',')+' iletim'},
+    {name:'Harita / Konum',status:'up',detail:'Gecikme yok'},
+    {name:'SMS Servisi',status:'up',detail:'Gecikme yok'}
+  ];
+  document.getElementById('svcGrid').innerHTML=services.map(s=>`<div class="card status-item"><div class="sh"><span class="sname">${s.name}</span><span class="status-dot ${s.status}"></span></div><div class="slabel ${s.status}">${s.status==='up'?'Çalışıyor':s.status==='slow'?'Yavaş':'Kesinti'}</div><div class="sval">${s.detail}</div></div>`).join('');
+  const downCount=services.filter(s=>s.status!=='up').length;
+  document.getElementById('svc_pill').textContent=downCount===0?'Tüm servisler aktif':downCount+' serviste sorun';
+
+  p3done=true;
+}
+
+// ---- Tarih Aralığı: en fazla 3 gün (2 gün fark) ----
+(function(){
+  const MAXSPAN=2*86400000; // 3 takvim günü (uç noktalar dahil)
+  const s=document.getElementById('fStart'), e=document.getElementById('fEnd');
+  const iso=d=>d.toISOString().slice(0,10);
+  const today=new Date();today.setHours(0,0,0,0);
+  const start=new Date(today);start.setDate(start.getDate()-2);
+  s.value=iso(start);e.value=iso(today);
+  function clampFromStart(){
+    const sd=new Date(s.value),ed=new Date(e.value);
+    if(ed<sd)e.value=s.value;
+    else if(ed-sd>MAXSPAN)e.value=iso(new Date(sd.getTime()+MAXSPAN));
+    e.min=s.value;e.max=iso(new Date(sd.getTime()+MAXSPAN));
+  }
+  function clampFromEnd(){
+    const sd=new Date(s.value),ed=new Date(e.value);
+    if(sd>ed)s.value=e.value;
+    else if(ed-sd>MAXSPAN)s.value=iso(new Date(ed.getTime()-MAXSPAN));
+    s.max=e.value;s.min=iso(new Date(ed.getTime()-MAXSPAN));
+  }
+  clampFromStart();
+  s.addEventListener('change',()=>{clampFromStart();render();});
+  e.addEventListener('change',()=>{clampFromEnd();render();});
+})();
+(function(){const u=document.getElementById('lastUpd');const set=()=>u.textContent=new Date().toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(' ',' · ');set();setInterval(set,30000);})();
+render();
+</script>
+</body>
+</html>
